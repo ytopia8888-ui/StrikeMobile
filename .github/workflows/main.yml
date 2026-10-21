@@ -1,0 +1,47 @@
+
+name: Build StrikeMobile APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - master
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build Android APK
+    runs-on: ubuntu-latest
+    container:
+      image: barichello/godot-ci:4.3
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check project files
+        run: |
+          test -f project.godot
+          test -f main.tscn
+          echo "Godot project found"
+
+      - name: Import project
+        run: godot --headless --editor --path . --quit
+
+      - name: Build APK
+        run: |
+          mkdir -p build
+          godot --headless \
+            --path . \
+            --export-debug "Android" build/StrikeMobile.apk
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: StrikeMobile-APK
+          path: build/StrikeMobile.apk
+          if-no-files-found: error
+          retention-days: 7
